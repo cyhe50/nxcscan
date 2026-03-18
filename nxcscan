@@ -95,7 +95,7 @@ fi
 if [ $1 == "all" ]; then
   services=("smb" "winrm" "rdp" "ldap" "wmi" "mssql")
 elif [[ "$1" == *","* ]]; then
-  IFS=',' read -ra services <<< "$1"
+  IFS=',' read -ra services <<<"$1"
 else
   services=("$1")
 fi
@@ -127,7 +127,7 @@ while [[ $# -gt 0 ]]; do
     shift 2
     ;;
   -c)
-    read -ra c <<< "$2"
+    read -ra c <<<"$2"
     shift 2
     ;;
   --with-local)
@@ -152,7 +152,7 @@ done
 # echo "u: $u, p: $p, H: $H, f: $f, c: $c"
 
 # start scanning
-for service in ${services[@]}; do
+for service in "${services[@]}"; do
   if [ "$f" != "" ]; then
     runCredentials
   elif [ "$u" != "" ] && [ "$H" != "" ]; then
