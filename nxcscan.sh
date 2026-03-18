@@ -1,14 +1,13 @@
 #!/bin/bash
 
-helpFunction()
-{
+helpFunction() {
   echo "usage: "
   echo "read credential file: ./nxcscan service ip -f credential_files -c 'additional commands'"
   echo "read username and password: ./nxcscan service ip -u username -p password -c 'additional commands'"
   echo "read username and hash: ./nxcscan service ip -u username -H password -c 'additional commands'"
 
   echo "example: ./nxcscan smb 192.168.138.133 -f creds -c '--users'"
-  echo "example: ./nxcscan smb targets -f creds -c '-M lsassy'" 
+  echo "example: ./nxcscan smb targets -f creds -c '-M lsassy'"
 
   echo '==================================================='
   echo 'credential_files format: (remember the prefix)'
@@ -24,14 +23,13 @@ helpFunction()
   exit
 }
 
-run()
-{
+run() {
   local usernames=$1
   local pass_or_hash=$2
   local mode=$3
   # echo "DEBUG in run(): m='${m}' user='${usernames}' secret='${pass_or_hash}'"
 
-  cmd=(env PYTHONWARNINGS="ignore" nxc "$service" "$ips" -u "$usernames" "$mode" "$pass_or_hash" $c)
+  cmd=(env PYTHONWARNINGS="ignore" nxc "$service" "$ips" -u "$usernames" "$mode" "$pass_or_hash" "$c")
 
   if [ "$only_success" = true ]; then
     # output with color (unbuffer is required, if not, run `sudo apt install expect)
@@ -39,7 +37,7 @@ run()
       echo "Executing: unbuffer ${cmd[*]} --continue-on-success | grep -Fv \"[-]\""
       unbuffer "${cmd[@]}" --continue-on-success | fgrep -vi "[-]"
     else
-      # fallback: no color 
+      # fallback: no color
       "${cmd[@]}" --continue-on-success | fgrep -vi "[-]"
     fi
   else
@@ -54,7 +52,7 @@ run()
         echo "Executing: unbuffer ${cmd[*]} --local-auth --continue-on-success | grep -Fv \"[-]\""
         unbuffer "${cmd[@]}" --local-auth --continue-on-success | fgrep -vi "[-]"
       else
-        # fallback: no color 
+        # fallback: no color
         "${cmd[@]}" --local-auth --continue-on-success | fgrep -vi "[-]"
       fi
     else
@@ -64,8 +62,7 @@ run()
   fi
 }
 
-runCredentials()
-{
+runCredentials() {
   # Read the file line-by-line
   while IFS=':' read -r m usernames pass_or_hash _; do
     # echo "DEBUG in runCredentials(): m='${m}' user='${usernames}' secret='${pass_or_hash}'"
@@ -82,9 +79,8 @@ runCredentials()
     fi
 
     run "$usernames" "$pass_or_hash" "$mode"
-  done < "$f"
+  done <"$f"
 }
-
 
 ####################################################################################
 # main function starts here
@@ -97,13 +93,14 @@ fi
 
 # parse all to services array
 if [ $1 == "all" ]; then
-	services=("smb" "winrm" "rdp" "ldap" "wmi" "mssql")
+  services=("smb" "winrm" "rdp" "ldap" "wmi" "mssql")
+elif [[ "$1" == *","* ]]; then
+  IFS=',' read -ra services <<< "$1"
 else
-	services=("$1")
+  services=("$1")
 fi
 
 ips="$2"
-
 
 # parse other arguments
 shift 2
@@ -113,27 +110,42 @@ only_success=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -u) u="$2"; shift 2 ;;
-    -p) p="$2"; shift 2 ;;
-    -H) H="$2"; shift 2 ;;
-    -f) f="$2"; shift 2 ;;
-    -c) c="$2"; shift 2 ;;
-    --with-local)
-      with_local=true
-      shift 1
-      ;;
-    --only-success)
-      only_success=true
-      shift 1
-      ;;
-    -h|--help)
-      helpFunction
-      exit 0
-      ;;
-    *)
-      echo "Unknown option: $1"
-      shift
-      ;;
+  -u)
+    u="$2"
+    shift 2
+    ;;
+  -p)
+    p="$2"
+    shift 2
+    ;;
+  -H)
+    H="$2"
+    shift 2
+    ;;
+  -f)
+    f="$2"
+    shift 2
+    ;;
+  -c)
+    c="$2"
+    shift 2
+    ;;
+  --with-local)
+    with_local=true
+    shift 1
+    ;;
+  --only-success)
+    only_success=true
+    shift 1
+    ;;
+  -h | --help)
+    helpFunction
+    exit 0
+    ;;
+  *)
+    echo "Unknown option: $1"
+    shift
+    ;;
   esac
 done
 
@@ -142,10 +154,10 @@ done
 # start scanning
 for service in ${services[@]}; do
   if [ "$f" != "" ]; then
-    runCredentials 
+    runCredentials
   elif [ "$u" != "" ] && [ "$H" != "" ]; then
     run "$u" "$H" "-H"
   else
-      run "$u" "$p" "-p"
+    run "$u" "$p" "-p"
   fi
 done
