@@ -29,7 +29,7 @@ run() {
   local mode=$3
   # echo "DEBUG in run(): m='${m}' user='${usernames}' secret='${pass_or_hash}'"
 
-  cmd=(env PYTHONWARNINGS="ignore" nxc "$service" "$ips" -u "$usernames" "$mode" "$pass_or_hash" "$c")
+  cmd=(env PYTHONWARNINGS="ignore" nxc "$service" "$ips" -u "$usernames" "$mode" "$pass_or_hash" "${c[@]}")
 
   if [ "$only_success" = true ]; then
     # output with color (unbuffer is required, if not, run `sudo apt install expect)
@@ -127,7 +127,7 @@ while [[ $# -gt 0 ]]; do
     shift 2
     ;;
   -c)
-    c="$2"
+    read -ra c <<< "$2"
     shift 2
     ;;
   --with-local)
